@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asrama QR Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        .qr-container {
+            transition: all 0.3s ease;
+        }
+        .qr-container:hover {
+            transform: scale(1.05);
+        }
+        .attendance-card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .attendance-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        @media (max-width: 768px) {
+            .responsive-flex {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-8 shadow-lg">
+                 <img src="https://ibb.co/jvDqpWSX" alt="SMATSGJ" class="mx-auto h-20 mb-4">
+                <h1 class="text-4xl font-bold text-white mb-2">Sistem Kehadiran Asrama</h1>
+                <p class="text-indigo-100 text-lg">QR Code Based Attendance Tracking System</p>
+            </div>
+        </header>
+        
+        <!-- Tab Navigation -->
+        <div class="flex bg-white rounded-lg shadow-sm mb-8 overflow-hidden">
+            <button id="student-tab" class="flex-1 px-6 py-3 font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-all duration-300">
+                <i class="fas fa-user-graduate mr-2"></i>Pelajar
+            </button>
+            <button id="teacher-tab" class="flex-1 px-6 py-3 font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all duration-300">
+                <i class="fas fa-chalkboard-teacher mr-2"></i>Guru/Penjaga
+            </button>
+        </div>
+        
+        <!-- Student View -->
+        <div id="student-view" class="space-y-8">
+            <!-- Student QR Card -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                <div class="flex items-center mb-4">
+                    <div class="bg-indigo-100 p-3 rounded-lg mr-3">
+                        <i class="fas fa-qrcode text-indigo-600 text-xl"></i>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-800">Kad QR Pelajar</h2>
+                </div>
+                <div class="flex responsive-flex items-center">
+                    <div class="w-48 h-48 bg-white border border-gray-200 rounded-lg flex items-center justify-center qr-container mr-8 mb-4">
+                        <canvas id="qr-canvas" class="w-full h-full"></canvas>
+                    </div>
+                    <div class="flex-1">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Nama Pelajar</label>
+                            <input type="text" id="student-name" class="w-full p-2 border border-gray-300 rounded" placeholder="Masukkan nama anda">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">ID Pelajar</label>
+                            <input type="text" id="student-id" class="w-full p-2 border border-gray-300 rounded" placeholder="Masukkan ID pelajar">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 mb-2">Dorm Asrama</label>
+                            <select id="hostel-block" class="w-full p-2 border border-gray-300 rounded">
+                                <option value="A">Dorm A</option>
+                                <option value="B">Dorm B</option>
+                                <option value="C">Dorm C</option>
+                                <option value="D">Dorm D</option>
+                            </select>
+                        </div>
+                        <button id="generate-qr" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center justify-center">
+                            <i class="fas fa-qrcode mr-2"></i>Jana QR Code
+                        </button>
+=======
+                        <button id="record-attendance" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">Rekod Kehadiran</button>
+=======
+                        <button id="record-attendance" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                            <i class="fas fa-check-circle mr-2"></i>Rekod Kehadiran
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attendance Status -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Status Kehadiran</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="py-2 px-4 border-b text-left">Tarikh</th>
+                                <th class="py-2 px-4 border-b text-left">Masa</th>
+                                <th class="py-2 px-4 border-b text-left">Jenis</th>
+                                <th class="py-2 px-4 border-b text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-history">
+                            <!-- Dynamic content will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Teacher View (Hidden by default) -->
+        <div id="teacher-view" class="space-y-8 hidden">
+            <!-- Scanner Section -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Pengimbas Kehadiran</h2>
+                <div class="flex flex-col items-center">
+                    <video id="scanner" class="w-full max-w-md h-auto border border-gray-300 rounded-lg mb-4"></video>
+                    <div class="flex space-x-4">
+                        <button id="start-scan" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Mulai Imbas</button>
+                        <button id="stop-scan" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition" disabled>Berhenti</button>
+                    </div>
+                </div>
+                <div id="scan-result" class="mt-4 hidden">
+                    <div class="p-4 bg-gray-100 rounded-lg">
+                        <h3 class="font-medium text-gray-800">Maklumat Pelajar</h3>
+                        <div class="mt-2">
+                            <p>Nama: <span id="scanned-name" class="font-medium"></span></p>
+                            <p>ID: <span id="scanned-id" class="font-medium"></span></p>
+                            <p>Dorm: <span id="scanned-block" class="font-medium"></span></p>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-gray-700 mb-2">Jenis Kehadiran</label>
+                            <select id="attendance-type" class="w-full p-2 border border-gray-300 rounded">
+                                <option value="prep">Prep</option>
+                                <option value="outing">Outing</option>
+                                <option value="late">Late</option>
+                                <option value="other">Lain-lain</option>
+                            </select>
+                        </div>
+                        <button id="record-attendance" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">Rekod Kehadiran</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dashboard -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Data Kehadiran</h2>
+                <div class="flex justify-between mb-4">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Tarikh</label>
+                        <input type="date" id="filter-date" class="p-2 border border-gray-300 rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">Dorm Asrama</label>
+                        <select id="filter-block" class="p-2 border border-gray-300 rounded">
+                            <option value="all">Semua Dorm</option>
+                            <option value="A">Dorm A</option>
+                            <option value="B">Dorm B</option>
+                            <option value="C">Dorm C</option>
+                            <option value="D">Dorm D</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="py-2 px-4 border-b text-left">Nama</th>
+                                <th class="py-2 px-4 border-b text-left">ID</th>
+                                <th class="py-2 px-4 border-b text-left">Dorm</th>
+                                <th class="py-2 px-4 border-b text-left">Tarikh/Masa</th>
+                                <th class="py-2 px-4 border-b text-left">Jenis</th>
+                                <th class="py-2 px-4 border-b text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-records">
+                            <!-- Dynamic content will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Reports -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Laporan Statistik</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-gradient-to-br from-blue-100 to-blue-50 p-5 rounded-xl border border-blue-200 shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-center">
+                            <div class="bg-blue-600 text-white p-3 rounded-lg mr-4">
+                                <i class="fas fa-book-open text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-blue-800 font-medium mb-1">Prep</h3>
+                                <p class="text-3xl font-bold text-blue-600" id="prep-count">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-100 to-green-50 p-5 rounded-xl border border-green-200 shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-center">
+                            <div class="bg-green-600 text-white p-3 rounded-lg mr-4">
+                                <i class="fas fa-walking text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-green-800 font-medium mb-1">Outing</h3>
+                                <p class="text-3xl font-bold text-green-600" id="outing-count">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-100 to-purple-50 p-5 rounded-xl border border-purple-200 shadow-sm hover:shadow-md transition-all">
+                        <div class="flex items-center">
+                            <div class="bg-purple-600 text-white p-3 rounded-lg mr-4">
+                                <i class="fas fa-clock text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-purple-800 font-medium mb-1">Late</h3>
+                                <p class="text-3xl font-bold text-purple-600" id="late-count">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database simulation using localStorage
+        let attendanceDB = JSON.parse(localStorage.getItem('attendanceDB')) || {
+            students: {},
+            records: []
+        };
+
+        // DOM Elements
+        const studentView = document.getElementById('student-view');
+        const teacherView = document.getElementById('teacher-view');
+        const studentTab = document.getElementById('student-tab');
+        const teacherTab = document.getElementById('teacher-tab');
+        const qrCanvas = document.getElementById('qr-canvas');
+        const studentNameInput = document.getElementById('student-name');
+        const studentIdInput = document.getElementById('student-id');
+        const hostelBlockSelect = document.getElementById('hostel-block');
+        const generateQrBtn = document.getElementById('generate-qr');
+        const attendanceHistory = document.getElementById('attendance-history');
+        const scannerVideo = document.getElementById('scanner');
+        const startScanBtn = document.getElementById('start-scan');
+        const stopScanBtn = document.getElementById('stop-scan');
+        const scanResult = document.getElementById('scan-result');
+        const scannedName = document.getElementById('scanned-name');
+        const scannedId = document.getElementById('scanned-id');
+        const scannedBlock = document.getElementById('scanned-block');
+        const attendanceTypeSelect = document.getElementById('attendance-type');
+        const recordAttendanceBtn = document.getElementById('record-attendance');
+        const attendanceRecords = document.getElementById('attendance-records');
+        const filterDate = document.getElementById('filter-date');
+        const filterBlock = document.getElementById('filter-block');
+        const prepCountEl = document.getElementById('prep-count');
+        const outingCountEl = document.getElementById('outing-count');
+        const lateCountEl = document.getElementById('late-count');
+
+        let currentStudentId = '';
+        let scannerActive = false;
+        let codeReader;
+
+        // Tab switching
+        studentTab.addEventListener('click', () => {
+            studentView.classList.remove('hidden');
+            teacherView.classList.add('hidden');
+            studentTab.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
+            studentTab.classList.remove('text-gray-500');
+            teacherTab.classList.add('text-gray-500');
+            teacherTab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
+        });
+
+        teacherTab.addEventListener('click', () => {
+            teacherView.classList.remove('hidden');
+            studentView.classList.add('hidden');
+            teacherTab.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
+            teacherTab.classList.remove('text-gray-500');
+            studentTab.classList.add('text-gray-500');
+            studentTab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
+            updateTeacherDashboard();
+        });
+
+        // Generate QR Code
+        generateQrBtn.addEventListener('click', () => {
+            const name = studentNameInput.value.trim();
+            const id = studentIdInput.value.trim();
+            const block = hostelBlockSelect.value;
+            
+            if (!name || !id) {
+                alert('Sila isi nama dan ID pelajar terlebih dahulu');
+                return;
+            }
+            
+            currentStudentId = id;
+            const data = JSON.stringify({ id, name, block });
+            
+            QRCode.toCanvas(qrCanvas, data, { width: 200 }, (error) => {
+                if (error) {
+                    console.error(error);
+                    alert('Gagal menjana kod QR');
+                } else {
+                    // Store student info
+                    attendanceDB.students[id] = { name, block };
+                    localStorage.setItem('attendanceDB', JSON.stringify(attendanceDB));
+                    
+                    // Load attendance history for this student
+                    loadStudentAttendance(id);
+                }
+            });
+        });
+
+        // Load attendance history for student
+        function loadStudentAttendance(studentId) {
+            const studentRecords = attendanceDB.records.filter(r => r.studentId === studentId);
+            attendanceHistory.innerHTML = '';
+            
+            if (studentRecords.length === 0) {
+                attendanceHistory.innerHTML = '<tr><td colspan="4" class="py-4 text-center text-gray-500">Tiada rekod kehadiran</td></tr>';
+                return;
+            }
+            
+            studentRecords.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(record => {
+                const row = document.createElement('tr');
+                const date = new Date(record.timestamp);
+                
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b">${date.toLocaleDateString()}</td>
+                    <td class="py-2 px-4 border-b">${date.toLocaleTimeString()}</td>
+                    <td class="py-2 px-4 border-b">${getTypeName(record.type)}</td>
+                    <td class="py-2 px-4 border-b">
+                        <span class="status-dot bg-green-500"></span>
+                        <span>Rekod</span>
+                    </td>
+                `;
+                attendanceHistory.appendChild(row);
+            });
+        }
+
+        function getTypeName(type) {
+            const types = {
+                'prep': 'Prep',
+                'outing': 'Outing',
+                'late': 'Lewat',
+                'other': 'Lain-lain'
+            };
+            return types[type] || type;
+        }
+
+        // QR Scanner
+        startScanBtn.addEventListener('click', async () => {
+            startScanBtn.disabled = true;
+            stopScanBtn.disabled = false;
+            scannerActive = true;
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                scannerVideo.srcObject = stream;
+                
+                codeReader = new (window.ZXing.BrowserQRCodeReader)();
+                codeReader.decodeFromVideoDevice(undefined, scannerVideo.id, (result, err) => {
+                    if (result) {
+                        try {
+                            const studentData = JSON.parse(result.text);
+                            scannedName.textContent = studentData.name;
+                            scannedId.textContent = studentData.id;
+                            scannedBlock.textContent = studentData.block;
+                            scanResult.classList.remove('hidden');
+                            
+                            // Store current scanned student ID
+                            currentStudentId = studentData.id;
+                            
+                            // Stop scanning after successful scan
+                            stopScanner();
+                        } catch (e) {
+                            console.error('Invalid QR data:', e);
+                        }
+                    }
+                    if (err) {
+                        //console.error(err);
+                    }
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Gagal mengakses kamera: ' + err.message);
+                stopScanner();
+            }
+        });
+
+        stopScanBtn.addEventListener('click', stopScanner);
+
+        function stopScanner() {
+            if (scannerActive) {
+                scannerActive = false;
+                startScanBtn.disabled = false;
+                stopScanBtn.disabled = true;
+                
+                if (codeReader) {
+                    codeReader.reset();
+                    codeReader = null;
+                }
+                
+                if (scannerVideo.srcObject) {
+                    scannerVideo.srcObject.getTracks().forEach(track => track.stop());
+                    scannerVideo.srcObject = null;
+                }
+            }
+        }
+
+        // Record Attendance
+        recordAttendanceBtn.addEventListener('click', () => {
+            if (!currentStudentId) {
+                alert('Tiada pelajar diimbas');
+                return;
+            }
+            
+            const type = attendanceTypeSelect.value;
+            const timestamp = new Date().toISOString();
+            
+            const record = {
+                studentId: currentStudentId,
+                type,
+                timestamp,
+                status: 'recorded'
+            };
+            
+            attendanceDB.records.push(record);
+            localStorage.setItem('attendanceDB', JSON.stringify(attendanceDB));
+            
+            alert('Kehadiran berjaya direkod');
+            scanResult.classList.add('hidden');
+            updateTeacherDashboard();
+            
+            // Reset scanner if needed
+            if (!scannerActive) {
+                scannerVideo.srcObject.getTracks().forEach(track => track.stop());
+                scannerVideo.srcObject = null;
+                startScanBtn.disabled = false;
+            }
+        });
+
+        // Update Teacher Dashboard
+        function updateTeacherDashboard() {
+            // Filter records
+            let filteredRecords = [...attendanceDB.records];
+            
+            if (filterDate.value) {
+                const selectedDate = new Date(filterDate.value);
+                filteredRecords = filteredRecords.filter(record => {
+                    const recordDate = new Date(record.timestamp);
+                    return recordDate.toDateString() === selectedDate.toDateString();
+                });
+            }
+            
+            if (filterBlock.value !== 'all') {
+                filteredRecords = filteredRecords.filter(record => {
+                    const student = attendanceDB.students[record.studentId];
+                    return student && student.block === filterBlock.value;
+                });
+            }
+            
+            updateAttendanceTable(filteredRecords);
+            updateStatistics();
+        }
+
+        function updateAttendanceTable(records) {
+            attendanceRecords.innerHTML = '';
+            
+            if (records.length === 0) {
+                attendanceRecords.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-gray-500">Tiada rekod kehadiran</td></tr>';
+                return;
+            }
+            
+            records.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(record => {
+                const student = attendanceDB.students[record.studentId] || { name: 'Unknown', block: 'Unknown' };
+                const date = new Date(record.timestamp);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-2 px-4 border-b">${student.name}</td>
+                    <td class="py-2 px-4 border-b">${record.studentId}</td>
+                    <td class="py-2 px-4 border-b">${student.block}</td>
+                    <td class="py-2 px-4 border-b">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
+                    <td class="py-2 px-4 border-b">${getTypeName(record.type)}</td>
+                    <td class="py-2 px-4 border-b">
+                        <span class="status-dot bg-green-500"></span>
+                        <span>${record.status}</span>
+                    </td>
+                `;
+                attendanceRecords.appendChild(row);
+            });
+        }
+
+        function updateStatistics() {
+            const records = attendanceDB.records;
+            const prepCount = records.filter(r => r.type === 'prep').length;
+            const outingCount = records.filter(r => r.type === 'outing').length;
+            const lateCount = records.filter(r => r.type === 'late').length;
+            
+            prepCountEl.textContent = prepCount;
+            outingCountEl.textContent = outingCount;
+            lateCountEl.textContent = lateCount;
+        }
+
+        // Filter changes
+        filterDate.addEventListener('change', updateTeacherDashboard);
+        filterBlock.addEventListener('change', updateTeacherDashboard);
+
+        // Initialize ZXing
+        document.addEventListener('DOMContentLoaded', () => {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js';
+            script.onload = () => {
+                console.log('ZXing loaded');
+            };
+            document.head.appendChild(script);
+            
+            // Check if studentId exists in URL (for direct access)
+            const urlParams = new URLSearchParams(window.location.search);
+            const studentId = urlParams.get('studentId');
+            
+            if (studentId && attendanceDB.students[studentId]) {
+                const student = attendanceDB.students[studentId];
+                studentNameInput.value = student.name;
+                studentIdInput.value = studentId;
+                hostelBlockSelect.value = student.block;
+                currentStudentId = studentId;
+                
+                // Generate QR automatically
+                const data = JSON.stringify({ id: studentId, name: student.name, block: student.block });
+                QRCode.toCanvas(qrCanvas, data, { width: 200 });
+                loadStudentAttendance(studentId);
+            }
+        });
+    </script>
+</body>
+</html>
